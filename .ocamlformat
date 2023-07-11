@@ -1,0 +1,4 @@
+version = 0.25.1
+margin = 70
+profile = conventional
+parens-tuple = multi-line-only

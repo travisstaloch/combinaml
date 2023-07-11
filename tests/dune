@@ -1,0 +1,6 @@
+(library
+ (name tests)
+ (libraries combinaml)
+ (inline_tests)
+ (preprocess
+  (pps ppx_expect)))
