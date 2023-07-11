@@ -60,7 +60,7 @@ let%expect_test "basic" =
   [%expect "::0 error: foo,foobar"];
   print_result s (many (char_range 'a' 'z') |> chars_to_str);
   [%expect "foobar,"];
-  print_result s (optional (char 'z') |> opt_char_to_str);
+  print_result s (option (char 'z') |> opt_char_to_str);
   [%expect ",foobar"];
   print_result s (take_while_fn1 ident_start);
   [%expect "foobar,"];

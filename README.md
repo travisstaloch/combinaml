@@ -39,7 +39,7 @@ angstrom), `sep_by1`, `sep_by`, `choice`, `list`, `parse_string`
 `many_until`
 
 ### different api from angstrom
-`optional` - always succeeds returning an ocaml option
+`option` - always succeeds returning an ocaml option
 
 in combinaml
 * the following operate with a parser rather than a `char -> bool`:

@@ -505,7 +505,7 @@ let scan state f =
         parser.run i fail);
   }
 
-let optional (p : 'a t) : 'a option t =
+let option (p : 'a t) : 'a option t =
   {
     run =
       (fun i fail ->

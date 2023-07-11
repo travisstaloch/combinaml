@@ -192,7 +192,7 @@ val take_while_fn1 : ?max:int -> (char -> bool) -> string t
 val scan : 'a -> ('a -> char -> 'a option) -> (string * 'a) t
 (** [scan state f] given initial [state], take input while [f] returns Some. returns string * final state. *)
 
-val optional : 'a t -> 'a option t
+val option : 'a t -> 'a option t
 (** [optional] always succeeds returning result as an optional. *)
 
 val ( <|> ) : 'a t -> 'a t -> 'a t
