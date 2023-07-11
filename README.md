@@ -14,13 +14,13 @@ It uses many of the same operators and names.
 
 [combinaml.mli](combinaml/combinaml.mli)
 
-# compared to angstrom
+# compared with angstrom
 
 ### customizable
 
-combinaml exposes all of its' types and functions which allows users to define
-custom parsers.  if there is some way to do this with angstrom, please open an
-issue and let me know.
+combinaml exposes all of its types and functions which allows users to define
+custom parsers.  if there is some way to create custom parsers with angstrom,
+please open an issue and let me know.
 
 ### shared api with angstrom
 `return`, `fail`, `<?>`, `>>=`, `>>|`, `<*`, `*>`, `<*>`, `<|>`,

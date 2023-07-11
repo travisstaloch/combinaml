@@ -13,13 +13,13 @@ module Input : sig
   val is_at_end : t -> bool
   val has_length : t -> int -> bool
   val incr_by_unsafe : int -> t -> t
-  (* [incr_by_unsafe len i] return an [Input] with it's [pos] incremented by [len]. *)
+  (* [incr_by_unsafe len i] return an [Input.t] with it's [pos] incremented by [len]. *)
 
   val incr_unsafe : t -> t
-  (* [incr_unsafe len i] return an [Input] with it's [pos] incremented 1. *)
+  (* [incr_unsafe len i] return an [Input.t] with it's [pos] incremented 1. *)
 
   val incr_by : int -> t -> t
-  (* [incr_by len i] return an [Input] with it's [pos] incremented by [len]. raises [End_of_input] if beyond input length. *)
+  (* [incr_by len i] return an [Input.t] with it's [pos] incremented by [len]. raises [End_of_input] if beyond input length. *)
 
   val sub_unsafe : t -> int -> string
   (** [sub_unsafe i len] return sub string of [i.s] from [i.pos..i.pos + len]. *)
@@ -121,7 +121,7 @@ val lift6 :
   'g t
 
 val satisfy : (char -> bool) -> char t
-(** [satisfy f] a parser accepting when [f] returns true. *)
+(** [satisfy f] a parser that accepts when [f] returns true. *)
 
 val char : char -> char t
 (** [char c] a parser accepting [c]. *)
@@ -227,7 +227,7 @@ val list : 'a t list -> 'a list t
 type consume = Prefix | All
 
 val parse_string : ?consume:consume -> 'a t -> string -> 'a res
-(** [parse_string ?consume p s] return result of running [p] on [s]. [consume:All] requires that all input is consumes by running [p <* end_of_input]. *)
+(** [parse_string ?consume p s] return result of running [p] on [s]. [consume:All] requires that all input is consumed by running [p <* end_of_input]. *)
 
 val pair : 'a -> 'b -> 'a * 'b
 (** [pair a b] a helper useful with lift2. *)
