@@ -7,10 +7,14 @@ end
 let print_res ((i, res) : 'a res) =
   (match res with
   | Ok (s : string) -> Fmt.pr "%s" s
-  | Error fail -> Fmt.pr "%s" (errors_to_string (fail i [])));
+  | Error fail ->
+      let show_err (pos, msg) = Printf.sprintf "::%d %s" pos msg in
+      Fmt.pr "%s" (errors_to_string (fail i []) show_err));
   Fmt.pr ",%s" (Input.rest i)
 
-let print_result s (p : 'a t) = p.run (input s) (fun i s -> s) |> print_res
+let print_result s (p : 'a t) =
+  p.run (input s) (fun i fail -> fail) |> print_res
+
 let char_to_str_f = String.make 1
 let char_to_str (p : 'a t) = p >>| char_to_str_f
 let chars_to_str (p : 'a t) = p >>| fun cs -> cs |> List.to_seq |> String.of_seq
@@ -68,7 +72,9 @@ let%expect_test "basic" =
   [%expect "::0 take_while_fn failed,foobar"];
   print_result s (take_while1 (satisfy ident_start));
   [%expect "foobar,"];
-  print_result s (many_until (char 'b') (satisfy ident_start) |> chars_to_str);
+  print_result s (take_until1 (str "bar"));
+  [%expect "foo,bar"];
+  print_result s (many_until (satisfy ident_start) (char 'b') |> chars_to_str);
   [%expect "foo,ar"];
   print_result s (many1 (char 'b') <?> "'b' failed" |> chars_to_str);
   [%expect "\n::0 not enough matches\n::0 'b' failed,foobar"];
@@ -83,13 +89,11 @@ let%expect_test "basic" =
   [%expect "12,foo"];
   print_result s (peek (str "foo" <* str "bar"));
   [%expect "foo,foobar"];
-  print_result s (take_until1 (str "bar"));
-  [%expect "foo,bar"];
   let spaces = take_while (char ' ') in
   let ident = take_while1 (satisfy ident_start) <* spaces in
   let larrow = str "<-" <* spaces in
   let ident_larrow = ident <* larrow in
-  let def = lift2 pair ident_larrow (until ident_larrow (many ident)) in
+  let def = lift2 pair ident_larrow (until (many ident) ident_larrow) in
   let def_to_string (n, ss) = n ^ " <- " ^ String.concat " " ss in
   let defs_to_string defs = List.map def_to_string defs |> String.concat "," in
   print_result "a <-b c d <- e" (many def >>| defs_to_string);
@@ -102,5 +106,12 @@ let%expect_test "basic" =
   [%expect "f,oobar"];
   print_result s (list [ char 'f'; char 'o' ] |> chars_to_str);
   [%expect "fo,obar"];
-
+  print_result s (skip_many1 (char_range 'a' 'o') >>| Fun.const "");
+  [%expect ",r"];
+  print_result s (skip_many1 (fail "oops") >>| Fun.const "");
+  [%expect {|
+::0 not enough skips
+::0 oops,foobar|}];
+  print_result s (take_until_fn1 (fun c -> c = 'r'));
+  [%expect "fooba,r"];
   ()

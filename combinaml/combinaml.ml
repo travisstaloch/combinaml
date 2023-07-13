@@ -84,9 +84,8 @@ type 'a t = { run : Input.t -> fail -> 'a res }
 let input = Input.init
 let return a : 'a t = { run = (fun i fail -> i, Ok a) }
 
-let errors_to_string es : string =
-  List.map (fun (pos, msg) -> Printf.sprintf "::%d %s" pos msg) es
-  |> String.concat "\n"
+let errors_to_string errs show_err : string =
+  List.map (fun e -> show_err e) errs |> String.concat "\n"
 
 let fail msg : 'a t =
   {
@@ -488,6 +487,11 @@ let take_while_fn ?(min = 0) ?(max = Int.max_int) f =
 
 let take_while_fn1 = take_while_fn ~min:1
 
+let take_until_fn ?(min = 0) ?(max = Int.max_int) f =
+  take_while_fn ~min ~max (Fun.negate f)
+
+let take_until_fn1 = take_until_fn ~min:1
+
 let scan state f =
   {
     run =
@@ -584,11 +588,11 @@ let fix_direct (f : 'a -> 'b) : 'a =
 
 let fix = fix_direct
 
-let until sep p : 'a t =
+let until p end_ : 'a t =
   {
     run =
       (fun i fail ->
-        let i', r = (take_until sep).run i fail in
+        let i', r = (take_until end_).run i fail in
         match r with
         | Error e -> i', Error e
         | Ok s ->
@@ -596,7 +600,7 @@ let until sep p : 'a t =
             Input.incr_by_unsafe (i'.pos - i.pos) i, r');
   }
 
-let many_until sep p = fix (fun m -> sep *> return [] <|> lift2 List.cons p m)
+let many_until p end_ = fix (fun m -> end_ *> return [] <|> lift2 List.cons p m)
 let sep_by1 sep p = fix (fun m -> lift2 List.cons p (sep *> m <|> return []))
 
 let sep_by sep p =
@@ -607,6 +611,32 @@ let choice ?(failure_msg = "no more choices") ps =
 
 let rec list ps =
   match ps with [] -> return [] | p :: ps -> lift2 List.cons p (list ps)
+
+let skip_many ?(min = 0) ?(max = Int.max_int) p =
+  {
+    run =
+      (fun i fail ->
+        let rec loop n i : Input.t * int * fail =
+          if n = max then i, n, fail
+          else
+            let i', r = p.run i fail in
+            match r with Error fail -> i', n, fail | Ok _ -> loop (n + 1) i'
+        in
+        let i', n, fail' = loop 0 i in
+        let has_min = min <= n in
+        let has_max = n <= max in
+        if has_min && has_max then i', Ok ()
+        else
+          let fail' =
+            if not has_min then fun (_ : Input.t) errs ->
+              (i'.pos, "not enough skips") :: fail' i' errs
+            else fun (_ : Input.t) errs ->
+              (i'.pos, "too many skips") :: fail' i' errs
+          in
+          i, Error fail');
+  }
+
+let skip_many1 ?(max = Int.max_int) = skip_many ~min:1 ~max
 
 type consume = Prefix | All
 
@@ -619,3 +649,4 @@ let parse_string ?(consume = All) p s =
   p.run i fail
 
 let pair x y = x, y
+let both a b = lift2 pair a b

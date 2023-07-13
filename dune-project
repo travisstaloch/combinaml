@@ -15,15 +15,15 @@
 
 (package
  (name combinaml)
- (synopsis "Simple, customizable, dependency free parser combinator library")
+ (synopsis "Customizable, dependency free parser combinator library")
  (description
-  "An angstrom clone with no dependencies designed to be simple and customizable")
+  "An angstrom clone with no dependencies designed to be customizable")
  (depends
   (ocaml
    (>= 4.08))
   dune
   ppx_expect)
  (tags
-  (topics "parser combinator")))
+  ("parser-combinator" "parser-library" "ocaml")))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project

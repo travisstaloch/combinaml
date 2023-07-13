@@ -68,8 +68,8 @@ val input : string -> Input.t
 val return : 'a -> 'a t
 (** [return x] a parser that always succeeds, returning x *)
 
-val errors_to_string : (int * string) list -> string
-(** [errors_to_string errs] a helper for converting [errs] to a string. *)
+val errors_to_string : errs -> (err -> string) -> string
+(** [errors_to_string errs show_err] a helper for converting [errs] to a string. *)
 
 val fail : string -> 'a t
 (** [fail msg] a parser that always fails with [msg]. *)
@@ -175,19 +175,24 @@ val len : int t
 (** [len] return current input remaining length. *)
 
 val take_while : ?min:int -> ?max:int -> 'a t -> string t
-(** [take_while ?min ?max p] a parser that takes input while [p] succeeds up to [max] times. fail if less than [min] times. *)
+(** [take_while ?min ?max p] a parser that takes input while [p] succeeds up to [max] times. fails if run less than [min] times. *)
 
 val take_while1 : 'a t -> string t
 
 val take_until : ?min:int -> ?max:int -> 'a t -> string t
-(** [take_until ?min ?max p] a parser that takes input while [p] fails up to [max] times. fail if less than [min] times. *)
+(** [take_until ?min ?max p] a parser that takes input until [p] succeeds up to [max] times. fails if run less than [min] times.  *)
 
 val take_until1 : 'a t -> string t
 
 val take_while_fn : ?min:int -> ?max:int -> (char -> bool) -> string t
-(** [take_while_fn ?min ?max f] take up to [max] chars of input while [f] is true. fail if less than [min]. *)
+(** [take_while_fn ?min ?max f] take up to [max] chars of input while [f] is true. fails if run less than [min] times. *)
 
 val take_while_fn1 : ?max:int -> (char -> bool) -> string t
+
+val take_until_fn : ?min:int -> ?max:int -> (char -> bool) -> string t
+(** [take_until_fn ?min ?max f] take up to [max] chars of input while [f] is false. fails if run less than [min] times. *)
+
+val take_until_fn1 : ?max:int -> (char -> bool) -> string t
 
 val scan : 'a -> ('a -> char -> 'a option) -> (string * 'a) t
 (** [scan state f] given initial [state], take input while [f] returns Some. returns string * final state. *)
@@ -199,18 +204,18 @@ val ( <|> ) : 'a t -> 'a t -> 'a t
 (** [p1 <|> p2] alternative operator. if [p1] fails, run [p2]. both [p1] and [p2] receive the same input. *)
 
 val many : ?min:int -> ?max:int -> 'a t -> 'a list t
-(** [many ?min ?max p] return a list from evaluating [p] up to [max] times. fail if less than [min]. *)
+(** [many ?min ?max p] return a list from evaluating [p] up to [max] times. fails if run less than [min] times. *)
 
 val many1 : 'a t -> 'a list t
 
 val fix : ('a t -> 'a t) -> 'a t
 (** [fix p] create a lazy version of [p]. this allows for creating recursive parsers. *)
 
-val until : 'b t -> 'a t -> 'a t
-(** [until sep p] take input until the start of [sep] (without consuming [sep]) and feed the result to [p]. *)
+val until : 'b t -> 'a t -> 'b t
+(** [until p end] take input until the start of [end] (without consuming [end]) and feed the result to [p]. *)
 
-val many_until : 'a t -> 'b t -> 'b list t
-(** [many_until sep p] accumulate result of [p] in a list until [sep] succeeds. consumes and ignores [sep]. *)
+val many_until : 'a t -> 'b t -> 'a list t
+(** [many_until p end] accumulate result of [p] in a list until [end] succeeds. consumes and ignores [end]. *)
 
 val sep_by1 : 'a t -> 'b t -> 'b list t
 (** [sep_by sep p] accumulate result of [(p (sep p)?)+] in a list. *)
@@ -219,10 +224,15 @@ val sep_by : 'a t -> 'b t -> 'b list t
 (** [sep_by sep p] accumulate result of [(p (sep p)?)*] in a list. *)
 
 val choice : ?failure_msg:string -> 'a t list -> 'a t
-(* [choice ps] run [ps] in order with same input. return the first success. *)
+(** [choice ps] run [ps] in order with same input. return the first success. *)
 
 val list : 'a t list -> 'a list t
-(* [list ps] run [ps] in sequence. return a list of their results. *)
+(** [list ps] run [ps] in sequence. return a list of their results. *)
+
+val skip_many : ?min:int -> ?max:int -> 'a t -> unit t
+(** [skip_many ?min ?max p] run [p] up to [max] times, discarding result. fails if run less than [min] times. *)
+
+val skip_many1 : ?max:int -> 'a t -> unit t
 
 type consume = Prefix | All
 
@@ -231,3 +241,6 @@ val parse_string : ?consume:consume -> 'a t -> string -> 'a res
 
 val pair : 'a -> 'b -> 'a * 'b
 (** [pair a b] a helper useful with lift2. *)
+
+val both : 'a t -> 'b t -> ('a * 'b) t
+(** [both a b] run a and b in sequence returning their result as a tuple *)
